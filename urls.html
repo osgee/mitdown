@@ -1,0 +1,916 @@
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="format-detection" content="telephone=no">
+<title>Find Courses by Topic | MIT OpenCourseWare | Free Online Course Materials</title>
+<meta name="WT.cg_n" content="Find">
+<meta name="WT.cg_s" content="Find Courses by Topic">
+<link title="default" rel="stylesheet" type="text/css" href="/styles/grid.css">
+<link title="default" rel="stylesheet" type="text/css" href="/styles/base.css">
+<link title="default" rel="stylesheet" type="text/css" href="/styles/menu.css">
+<link title="default" rel="stylesheet" type="text/css" href="/styles/courses_new.css">
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="canonical" href="http://ocw.mit.edu/courses/find-by-topic/">
+<script type="text/javascript" async="" src="http://www.google-analytics.com/plugins/ua/linkid.js"></script><script src="http://dnn506yrbagrg.cloudfront.net/pages/scripts/0017/3534.js?400302" async="" type="text/javascript"></script><script async="" src="/scripts/webtrends.min.js"></script><script async="" type="text/javascript" src="http://www.googletagservices.com/tag/js/gpt.js"></script><script async="" src="//www.google-analytics.com/analytics.js"></script><script src="/scripts/jquery-1.7.2.js" type="text/javascript"></script>
+<script src="/scripts/ocw.js" type="text/javascript"></script>
+<script src="/scripts/hashchange.js" type="text/javascript"></script>
+<script src="/scripts/courseList-popup.js" type="text/javascript"></script>
+<script src="/scripts/coursefinder.js" type="text/javascript"></script>
+<script src="/scripts/googleanalytics.js" type="text/javascript"></script>
+<script type="text/javascript">
+		setTimeout(function(){var a=document.createElement("script");
+		var b=document.getElementsByTagName("script")[0];
+		a.src=document.location.protocol+"//dnn506yrbagrg.cloudfront.net/pages/scripts/0017/3534.js?"+Math.floor(new Date().getTime()/3600000);
+		a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b)}, 1);
+        
+        //google ads script for footer logos
+			var googletag = googletag || {};
+			googletag.cmd = googletag.cmd || [];
+			(function() {
+			var gads = document.createElement('script');
+			gads.async = true;
+			gads.type = 'text/javascript';
+			var useSSL = 'https:' == document.location.protocol;
+			gads.src = (useSSL ? 'https:' : 'http:') +
+			'//www.googletagservices.com/tag/js/gpt.js';
+			var node = document.getElementsByTagName('script')[0];
+			node.parentNode.insertBefore(gads, node);
+			})();
+            
+            googletag.cmd.push(function() {
+			googletag.defineSlot('/1064917/HOME_CORP_LOGO_1', [145, 53], 'div-gpt-ad-1388181177156-0').addService(googletag.pubads());
+			googletag.defineSlot('/1064917/HOME_CORP_LOGO_2', [145, 53], 'div-gpt-ad-1388181177156-1').addService(googletag.pubads());
+			googletag.defineSlot('/1064917/HOME_CORP_LOGO_3', [145, 53], 'div-gpt-ad-1388181177156-2').addService(googletag.pubads());
+			googletag.defineSlot('/1064917/HOME_CORP_LOGO_4', [145, 53], 'div-gpt-ad-1388181177156-3').addService(googletag.pubads());
+			googletag.defineSlot('/1064917/HOME_CORP_LOGO_5', [145, 53], 'div-gpt-ad-1388181177156-4').addService(googletag.pubads());
+			googletag.defineSlot('/1064917/HOME_CORP_LOGO_6', [145, 53], 'div-gpt-ad-1388181177156-5').addService(googletag.pubads());
+			googletag.pubads().enableSingleRequest();		
+			googletag.enableServices();			
+			});            
+            
+            //script for sending the pageview request to GA server
+			ga('send', 'pageview', location.pathname + location.search + location.hash);
+</script>
+<script>
+ 
+    var subcatFilter = false;
+    var specialityFilter = false;
+    
+	//compares the Categories/subcategories/specialities and arrange them in alphabetical order 
+	var alphabetically = function(obj1,obj2){		
+        var obj1LowerCase = new String(obj1.toLowerCase());
+        var obj2LowerCase = new String(obj2.toLowerCase());
+        return (obj1LowerCase.localeCompare(obj2LowerCase));
+    }
+	
+	//set Category/subCategory/speciality in the URL on click of the Category/subCategory/speciality present in the first/second/third Coloumn
+	function updateParams(value,level){
+		value = value.toLowerCase().replace(/[_\W]+/g, "");
+		var currentURL = window.location.hash;
+		
+		if(level ==1){return window.location.hash ='#cat=' + value;}
+		
+		else if (level ==2){var position =currentURL.indexOf('&subcat=');
+					        var placeholder = '&subcat=' }
+		else{var position =currentURL.indexOf('&spec=');
+			 var placeholder = '&spec='}
+			 
+		if (position != -1){currentURL = currentURL.substr(0,position);}
+		window.location.hash = currentURL + placeholder + value;
+	}	
+	
+    function showTags(key, level) {
+        subcatFilter = false;
+        specialityFilter = false;
+        $("#kss-spinner").css({'display':'block'});
+        $.ajax({
+				url: "./"+key + "?"+ new Date().getTime(),
+		        dataType: 'json',
+				success: function(courses){
+				currentResults=courses;
+				populateSubCat();
+				$("#kss-spinner").css({'display':'none'});    
+			    },
+				error: function(xhr, textStatus, errorThrown) {  
+				console.log(xhr.Status);
+				console.log('json not loaded ');
+			    }
+		});      
+                currentDept = key;        
+    }
+	
+	//check whether the department is resource or not and hide/show the course number row on the popup
+    function checkSR(obj,department){
+        if (department !='resources') {
+            $(".SRclass").show();
+            }
+        else{$(".SRclass").hide();}
+	}
+	
+	// filters the courses according to selected speciality in 3rd column
+    function filterBySpeciality(courses,subCat,speciality){
+        var filteredcourses=[];
+        $.each(courses,function(key,value){
+            thisCourse = this;
+            topics = this.topics;
+                $.each(topics,function(index){
+                    if(this.subCat == subCat && this.speciality == speciality){
+                        filteredcourses[filteredcourses.length] = thisCourse;
+                        return;
+                    }
+                });
+        });
+        return filteredcourses;
+    }
+	
+    //filters the courses according to selected subcategory in 2nd column
+	function filterBySubCat(courses,subCat){
+        var filteredcourses=[];
+        $.each(courses,function(key,value){
+            thisCourse = this;
+            topics = this.topics;
+                $.each(topics,function(index){
+                    if(this.subCat == subCat){
+                        filteredcourses[filteredcourses.length] = thisCourse;
+                        return;
+                    }
+                });
+        });
+        return filteredcourses;
+    }
+	
+    //does all filtering based on selected filters,subcat and speciality
+    function getFilteredCourses(allCourses){
+        var filteredcourses=allCourses;
+        var enabledFilters = [];
+        var allDisabled=true;
+        for(var filter in filters){
+            if(filters[filter]){ allDisabled=false; break;}
+        }
+        if(allDisabled && subcatFilter == false && specialityFilter == false) return allCourses;
+        for(var filter in filters){
+            if(filters[filter]){
+                enabledFilters[enabledFilters.length]=filter;
+            }
+        }
+        if(subcatFilter!=false)
+            filteredcourses = filterBySubCat(filteredcourses,subcatFilter);
+        if(specialityFilter!=false)
+            filteredcourses = filterBySpeciality(filteredcourses,subcatFilter,specialityFilter);
+        if(!allDisabled)
+            filteredcourses=filterCourses(filteredcourses,enabledFilters);
+        return filteredcourses;
+    }
+    
+	// shows the filtered courses obtained from get filtered courses
+    function showFilteredCourses(){
+        var courseResults = $("#courseList"); 
+        $(courseResults).html('');
+		var courses_id_list={}; 
+        var filteredcourses = getFilteredCourses(currentResults);
+        $("#resultCount").html(filteredcourses.length);
+        if(filteredcourses.length == 0){
+            $('<br/><h3>&nbsp;&nbsp;No results.</h3>').appendTo($(courseResults));
+        }
+		var l=0;
+		var uniqueTitles=new Array();
+		var uniqueMcns=new Array();
+		var uniqueSems=new Array();
+		var uniqueNos=new Array();
+		filteredcourses = custom_sort(filteredcourses,true);
+        $.each(filteredcourses,function(key,value){							
+            if (courses_id_list[this.id] != true){
+                courses_id_list[this.id]=true;				
+				if(l%2==0){
+					$('<tr class="odd" ><td><a rel="coursePreview" class="preview" href="/'+this.href+'" onClick="checkSR(this,\''+this.department+'\')">'+this.mcn+'</a></td>\
+					<td><a id="result'+l+'" rel="coursePreview" class="preview" href="/'+this.href+'" onClick="checkSR(this,\''+this.department+'\')">'+this.title+'</a></td>\
+					<td><a rel="coursePreview" class="preview" href="/'+this.href+'" onClick="checkSR(this,\''+this.department+'\')">'+this.level+'</a></td></tr>').appendTo($(courseResults));				
+				}
+				else{
+					 $('<tr class="even"><td><a rel="coursePreview" class="preview" href="/'+this.href+'" onClick="checkSR(this,\''+this.department+'\')">'+this.mcn+'</a></td>\
+					 <td><a id="result'+l+'" rel="coursePreview" class="preview" href="/'+this.href+'" onClick="checkSR(this,\''+this.department+'\')">'+this.title+'</a></td>\
+					 <td><a rel="coursePreview" class="preview" href="/'+this.href+'" onClick="checkSR(this,\''+this.department+'\')">'+this.level+'</a></td></tr>').appendTo($(courseResults));		    
+				}			
+				if(uniqueTitles.indexOf(this.title)==-1){
+					uniqueTitles[uniqueTitles.length]=this.title;
+					uniqueMcns[uniqueMcns.length]=this.mcn;
+					uniqueSems[uniqueSems.length]=this.sem;
+					uniqueNos[uniqueNos.length]=l;
+				}
+				else{			
+					if(uniqueMcns.indexOf(this.mcn)!=-1){				
+					 var resultNo=uniqueTitles.indexOf(this.title);
+					 $("#result"+uniqueNos[resultNo]).html(''+uniqueTitles[resultNo]+' ('+uniqueSems[resultNo]+')');
+					 $("#result"+l).html(''+this.title+' ('+this.sem+')');
+					}
+				}
+				l++;
+			}		
+        });
+		$('</tbody>').appendTo($(courseResults));        
+    }
+    
+	// selects the speciality in 3rd column 
+    function selectSpeciality(obj,speciality){	
+		var br3Result = $(".scroller",$("#br3"));
+        highlightSelectedTag(obj,3);
+        specialityFilter = speciality;
+		var position =$(br3Result).scrollTop();
+		if (position==0){$(br3Result).scrollTop(specialityPosition);} 
+        showFilteredCourses();
+    }	
+	
+	// selects the sub catogries in 2nd column 
+	function selectSubCat(obj,subCat){
+        var courseResults = $("#courseList"); 
+        var uniqueSpeciality={}; 
+		var br2Result = $(".scroller",$("#br2"));
+        var br3Result = $(".scroller",$("#br3"));
+        highlightSelectedTag(obj,2);       
+        subcatFilter = subCat;
+        specialityFilter = false;
+        $.each(currentResults,function(key,value){
+                topics = this.topics;
+                $.each(topics,function(index){
+                    if(this.subCat == subCat)
+                        if(this.speciality!='')
+                            if (uniqueSpeciality[this.speciality] != true)
+                                uniqueSpeciality[this.speciality] = true;
+                });	
+        });	
+        var temp = [];
+		var spec =[];
+        for(value in uniqueSpeciality){
+        temp += value +"/";
+        }
+        if (temp != ''){
+        spec = temp.split("/");
+        spec.sort(alphabetically);
+        spec.shift();
+        }
+		var i=0;
+        for(var k =0;k<spec.length;k++){
+			
+			if(i%2==0){
+		
+            $('<p class="odd" onClick="updateParams(\''+spec[k]+'\',3)">'+spec[k]+'</p>').appendTo($(br3Result));
+			}
+			else{
+		
+            $('<p class="even" onClick="updateParams(\''+spec[k]+'\',3)">'+spec[k]+'</p>').appendTo($(br3Result));
+			}
+			
+			i++;
+        }
+		if(i==0){
+		$('<p class="none">No specialties are available within this sub-topic</p>').appendTo($(br3Result));
+		}
+		var position =$(br2Result).scrollTop();
+		if (position ==0){$(br2Result).scrollTop(subCategoryPosition);}		 
+        $("#br3").scrollTop(0);
+        $(br3Result).scrollTop(0);        
+        showFilteredCourses();
+    }
+     // To fill 2nd column with sucategories according to selected tag */
+	function populateSubCat(){
+		var uniqueSubCat={}; 
+        var br1Result = $(".scroller",$("#br1"));   
+		var br2Result = $(".scroller",$("#br2"));  
+        $.each(currentResults,function(key,value){
+                topics = this.topics;
+                $.each(topics,function(index){
+                    if(this.subCat!='')
+                        if (uniqueSubCat[this.subCat] != true)
+                            uniqueSubCat[this.subCat] = true;
+                });
+        });		
+		var temp = [];
+		var subCat = [];
+		for(value in uniqueSubCat){
+		temp += value +"/";
+		}
+		subCat = temp.split("/");
+		subCat.sort(alphabetically);
+		subCat.shift();		
+		var j=0;		
+        for(var i =0;i<subCat.length;i++){
+			if(j%2==0){
+            $('<p class="odd" onClick="updateParams(\''+subCat[i].replace("'","\\'")+'\',2)">'+subCat[i]+'</p>').appendTo($(br2Result));
+			}
+			else{
+			$(''+j+'<p class="even" onClick="updateParams(\''+subCat[i].replace("'","\\'")+'\',2)">'+subCat[i]+'</p>').appendTo($(br2Result));
+			}
+			j++;
+        }
+		var position =$(br1Result).scrollTop();
+		if (position ==0){$(br1Result).scrollTop(categoryPosition);}
+        $("#br2").scrollTop(0);
+        $(br2Result).scrollTop(0);
+        showFilteredCourses();
+    }
+	
+	//select the Specility tag on which user has clicked  
+	function selectSpecialityTag(speciality){
+		speciality = speciality.replace('spec=','');
+		var Br3pTags =$(".scroller",$("#br3")).find("p");		
+			$.each(Br3pTags,function(){
+				if (speciality==this.innerHTML.toLowerCase().replace(/[_\W]+/g, "")){
+				specialityPosition =this.offsetTop - 6*26;   //26 is the height of one row and each box shows 6 rows at a time.
+				selectSpeciality(this,this.innerHTML);
+				}
+				});				
+		}
+	
+	//select the Subcategory tag on which user has clicked   
+	function selectSubCategoryTag(subCategory){
+		var Br2pTags =$(".scroller",$("#br2")).find("p");
+		var SubCat = subCategory.replace('subcat=','');
+			$.each(Br2pTags,function(){						
+				if (SubCat==this.innerHTML.toLowerCase().replace(/[_\W]+/g, "")){
+				subCategoryPosition= this.offsetTop - 6*26;    //26 is the height of one row and each box shows 6 rows at a time.
+				selectSubCat(this,this.innerHTML);				
+				}
+			});	
+		}
+	
+	//select the Category tag on which user has clicked
+	function selectCategoryTag(category){
+		var Br1pTags = $(".scroller",$("#br1")).find("p");
+			$.each(Br1pTags,function(){	
+				var rel_category= $(this).attr('rel');				
+				if (rel_category == category){
+						var file = category.replace('#cat=','')+'.json'	
+						selectTag(this,file,1);
+						categoryPosition= this.offsetTop - 6*26;   //26 is the height of one row and each box shows 6 rows at a time.
+						}
+				});
+			}
+	
+	//any change in URL will call this function
+	$(window).hashchange(function(){
+		var category = location.hash.split('&')[0];
+		var subCategory = location.hash.split('&')[1];
+		var speciality = location.hash.split('&')[2];	
+		
+		if (category != undefined && subCategory==undefined){selectCategoryTag(category);
+                                                             trackEvents(category,'Category Click','Find By Topic');}	
+		
+		if (subCategory != undefined && speciality == undefined){
+			var Br2pTags =$(".scroller",$("#br2")).find("p");
+			if (Br2pTags.length>0){selectSubCategoryTag(subCategory);
+                                   trackEvents(category+'&'+subCategory,'SubCategory Click','Find By Topic');}	
+			else{
+				selectCategoryTag(category);
+				$(document).ajaxSuccess(function() {selectSubCategoryTag(subCategory);
+				                                     trackEvents(category+'&'+subCategory,'SubCategory Click','Find By Topic');});					
+				}
+		}
+		
+		if (speciality != undefined){
+			var Br3pTags =$(".scroller",$("#br3")).find("p");
+			if (Br3pTags.length>0){selectSpecialityTag(speciality);
+			                       trackEvents(category+'&'+subCategory+'&'+speciality,'Speciality Click','Find By Topic');}
+			else{
+				selectCategoryTag(category);
+				$(document).ajaxSuccess(function() {selectSubCategoryTag(subCategory);
+													selectSpecialityTag(speciality);
+													trackEvents(category+'&'+subCategory+'&'+speciality,'Speciality Click','Find By Topic');
+													});					
+				}				
+		}				
+					
+	});
+					
+    $(document).ready(function(){		
+        $('<br/><h3>No results.</h3>').appendTo($(".scroller",$("#results")));
+        $("#kss-spinner").css({'display':'block'});
+        var br1Result = $(".scroller",$("#br1"));
+       	var result = $.ajax({
+				url: "topics.json?" + new Date().getTime(),
+				dataType: 'json',
+				success: function(topics){
+						var temp = [];
+						var topic = [];
+						
+						for(value in topics){
+						temp += value +"/";
+						}
+						topic = temp.split("/");
+						topic.sort(alphabetically);
+						topic.shift();
+						var k=0;
+						$.each(topics,function(){
+									 if(k%2==0){
+									$('<p class="odd" rel="#cat='+this.file.replace('.json', '')+'" onClick="updateParams(\''+this.file.replace('.json', '')+'\',1)">'+this.name+'</p>').appendTo($(br1Result));
+									}
+									else{
+									$('<p class="even" rel="#cat='+this.file.replace('.json', '')+'" onClick="updateParams(\''+this.file.replace('.json', '')+'\',1)">'+this.name+'</p>').appendTo($(br1Result));
+									}
+									k++;
+						});                
+						$("#kss-spinner").css({'display':'none'});	
+				},
+				 error: function(xhr,status,statusText) {  
+						console.log('topics.json not loaded');
+						alert('Sorry, an error occurred. Please try reloading the page. \n\nIf that doesn\'t work please send us the following error message, using the contact us page. \n\n'+this.url +' '+ xhr.status +' '+ xhr.statusText);
+				}
+			});			
+		result.done(function() {
+			$(window).trigger('hashchange');
+			});				
+        $(".filterCheckbox").live('change',function(){
+            if($(this).attr('checked')=='checked') filters[$(this).attr('name')]=true;
+            else filters[$(this).attr('name')]=false;
+            showFilteredCourses();
+        });
+        $("#br1").scrollTop(0);
+       $(br1Result).scrollTop(0);  
+	});
+</script>
+<script src="/scripts/webtrends.load.js" type="text/javascript"></script>
+<script async="" type="text/javascript" src="http://partner.googleadservices.com/gpt/pubads_impl_70g.js"></script><script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/osd.js"></script></head>
+<body itemscope="" itemtype="http://schema.org/WebPage">
+<div id="kss-spinner" style="display: none;"><div style="margin-left:50%"><img src="/images/spinner.gif" style="opacity:1;position:fixed;top:50%;" alt=""></div></div>
+<div id="top">
+    <div id="grid">
+        <!-- *begin header* -->
+		<!--googleoff: index-->
+        <div id="banner" role="banner" class="grid_6 alpha"><a href="/"><img src="/images/ocw_mast.png" alt="MIT OpenCourseWare, Massachusetts Institute of Technology" class="logo"></a></div>
+		<form method="get" action="/subscribe/index.htm?utm_source=header">
+        <div id="subscribe" role="form toolbar" class="grid_6 omega">
+        	<div class="module">
+            <table class="social">
+            	<tbody>
+                	<tr>
+						<td class="socialbutton"><a href="/subscribe/index.htm?utm_source=header"><img alt="An icon depicting an envelope." src="/images/trans.gif">Subscribe to the OCW Newsletter</a></td>
+						<td><a href="https://plus.google.com/104567381989352550847/posts"><img src="/images/icon_gp.png" alt="Click to visit our Google+ page."></a><a href="https://www.pinterest.com/mitocw/pins/"><img src="/images/icon_pin.png" alt="Click to visit our Pinterest page."></a><a href="http://facebook.com/mitocw"><img src="/images/icon_fb.png" alt="Click to visit our Facebook page."></a><a href="http://twitter.com/mitocw"><img src="/images/icon_tw.png" alt="Click to visit our Twitter feed."></a></td>
+					</tr>
+                </tbody>
+            </table>
+            </div>
+			<p class="helplinks"><a href="/help">Help</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<a href="/jsp/feedback.jsp?Referer=">Contact Us</a></p>
+        </div>
+        <div class="clear"></div>
+		</form>
+        <div id="mega" role="navigation" class="grid_8 alpha">        
+            <ul id="menu">
+                <li id="menu_home">
+                    <a href="/"><img src="/images/top-nav_home.png" class="home_icon" alt="Click for site home page."></a><!-- Begin Home Item -->
+                </li><!-- End Home Item -->        
+                <li class="selected">
+                    <a href="#" class="drop">Courses</a><!-- Begin 5 columns Item -->
+                    <div class="dropdown_5columns-a mega-courses">                    
+                        <div class="col_1a">
+                            <div class="row_1a">
+                                <div class="quart">
+                                    <h2 class="nav">Find courses by:</h2>
+                                    <ul class="nav-bullet find_by">
+                                        <li><a href="/courses/find-by-topic/">Topic</a></li>
+                                        <li><a href="/courses/find-by-number/">MIT Course Number</a></li>
+                                        <li><a href="/courses/find-by-department/">Department</a></li>
+                                    </ul>
+                                </div>
+                                <div class="quart">
+                                    <h2 class="nav">Collections</h2>
+                                    <ul class="nav-bullet">
+										<li><a href="/courses/audio-video-courses/">Audio/Video Lectures</a></li>
+										<li><a href="/courses/online-textbooks/">Online Textbooks</a></li>
+										<li><a href="/courses/new-courses/">New Courses</a></li>
+										<li><a href="/courses/most-visited-courses/">Most Visited Courses</a></li>
+										<li><a href="/courses/ocw-scholar/">OCW Scholar Courses</a></li>
+										<li><a href="/courses/this-course-at-mit/">This Course at MIT</a></li>
+										<li><a href="/resources/">Supplemental Resources</a></li>
+									</ul>
+                                </div>
+                                <div class="clear">&nbsp;</div>
+                            </div>
+                            <div class="row_1b">
+                                <h2 class="nav">Cross-Disciplinary Topic Lists</h2>
+                                <div class="quart">
+                                <ul class="nav-bullet">
+                                    <li><a href="/courses/energy-courses">Energy</a></li>
+                                    <li><a href="/courses/entrepreneurship">Entrepreneurship</a></li>
+                                    <li><a href="/courses/environment-courses">Environment</a></li>
+                                </ul>
+                                </div>    
+                                <div class="quart">
+                                <ul class="nav-bullet">
+									<li><a href="/courses/intro-programming">Introductory Programming</a></li>
+                                    <li><a href="/courses/life-sciences">Life Sciences</a></li>
+                                    <li><a href="/courses/transportation-courses">Transportation</a></li>
+                                </ul>
+                                </div>
+                                <div class="clear">&nbsp;</div>
+                            </div>
+                            <div class="clear">&nbsp;</div>
+                        </div>
+                        <div class="col_1b">
+                            <h2 class="nav">Translated Courses</h2>
+                            <ul class="nav-bullet">
+                                <li><a href="/courses/translated-courses/traditional-chinese">繁體字 / Traditional Chinese</a></li>
+                                <li><a href="/courses/translated-courses/spanish">Español / Spanish</a></li>
+                                <li><a href="/courses/translated-courses/portuguese">Português / Portuguese</a></li>
+                                <li><a href="/courses/translated-courses/persian">فارسی / Persian</a></li>
+                                <li><a href="/courses/translated-courses/turkish">Türkçe / Turkish</a></li>
+                                <li><a href="/courses/translated-courses/korean">(비디오)한국 / Korean</a></li>
+								<li><a href="/courses/translated-courses">More...</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <a href="" class="drop">About</a>
+                    <div class="dropdown_1column-a">
+                        <div class="col_1">
+                            <ul class="nav-bullet mega-div-bottom">
+                                <li><a href="/about/">About MIT OpenCourseWare</a></li>
+                            </ul>
+                            <ul class="nav-bullet mega-div-bottom">
+                                <li><a href="/about/site-statistics/">Site Stats</a></li>
+                                <li><a href="/about/ocw-stories/">OCW Stories</a></li>                                
+                            </ul>
+                            <ul class="nav-bullet">
+                                <li><a href="/about/media-coverage/">Media Coverage</a></li>
+                                <li><a href="/about/newsletter/">Newsletter</a></li>
+                            </ul>
+                        </div>
+                    </div>  
+                </li>    
+                <li>
+                    <a href="" class="drop">Donate</a>        
+                    <div class="dropdown_1column-a">
+                            <div class="col_1">
+                                <ul class="nav-bullet mega-div-bottom">
+                                    <li><a href="/donate/">Make a Donation</a></li>
+                                    <li><a href="/donate/why-donate/">Why Donate?</a></li>                                    
+                                    <li><a href="/donate/our-supporters/">Our Supporters</a></li>
+                                    <li><a href="/donate/other-ways-to-contribute/">Other Ways to Contribute</a></li>
+									<li><a href="/donate/shop-ocw">Shop OCW</a></li>
+								</ul>
+								<ul class="nav-bullet">
+									<li><a href="/support/">Become a Corporate Sponsor</a></li>
+								</ul>
+                            </div>
+                    </div>            
+                </li>        
+                <li>
+                    <a href="" class="drop">Featured Sites</a>        
+                    <div class="dropdown_1column-a">
+                        <div class="col_1">
+                            <ul class="nav-bullet mega-div-bottom">
+                                <li><a href="/high-school/">Highlights for High School</a></li>
+								<li><a href="/educator/">OCW Educator</a></li>
+                            </ul>
+                            <ul class="nav-bullet mega-div-top">
+								<li><a href="http://ocw.mit.edu/ans7870/featured/mitx-courses-on-edx.htm">MITx Courses on edX</a></li>
+								<li><a href="http://teachingexcellence.mit.edu/">Teaching Excellence at MIT</a></li>
+                                <li><a href="http://www.oeconsortium.org/">Open Education Consortium</a></li>
+							</ul>
+                        </div>
+                    </div>            
+                </li>
+            </ul>        
+        </div>
+        <div id="search" role="search" class="grid_4 omega">
+            <form method="get" action="http://search.mit.edu/search">
+                <input type="hidden" value="ocw" name="site">  
+                <input type="hidden" value="mit" name="client"> 			 
+                <input type="hidden" value="*" name="getfields">  
+                <input type="hidden" value="xml_no_dtd" name="output"> 			 
+                <input type="hidden" value="http://ocw.mit.edu/search/google-ocw.xsl" name="proxystylesheet">
+				<input type="hidden" value="WT%2Ecg_s:Course Home|WT%2Ecg_s:Resource Home" name="requiredfields">  
+				<input type="hidden" value="WT%2Ecg_s:Course Home|WT%2Ecg_s:Resource Home" name="sectionlimit">
+                <input type="hidden" value="i" name="as_dt"> 			 
+                <input type="hidden" value="utf-8" name="oe">  
+                <input type="hidden" value="web" name="departmentName">
+                <input type="hidden" value="0" name="filter">
+                <input type="hidden" name="courseName">
+                <table class="search">
+                    <tbody>
+                        <tr>
+                            <td class="black"><input type="text" onblur="fillSearchBox()" onfocus="clearSearchBox()" maxlength="255" value="Search" name="q" class="greytext searchField" id="terms"></td>
+                            <td class="black"><input type="image" src="/images/button_search.png" name="btnG" class="sub_button"></td>
+                            <td class="text2"><a href="/search/AdvancedSearch.htm">Advanced<br>Search</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </form>
+        </div>
+        <div class="clear"></div>
+        <!-- *end header* -->
+		<!--googleon: index-->
+	</div>
+</div>
+
+<div id="center_chp">
+    <div id="grid">
+		<div id="left">
+         		<div id="breadcrumb_chp"><p><a href="/">Home </a><span>»</span><span dir="ltr"><a href="/courses"> Courses </a><span>»</span></span><span dir="ltr"><span> Find By Topic</span></span></p></div>
+    			<div class="clear"></div>
+            <div id="course_title">
+            	<h1 class="title" itemprop="name" property="dct:title">Course Finder</h1>
+            </div>
+           	<div class="clear"></div>
+            <div id="course_wrapper">
+				<ul class="finder2">
+					<li><a href="/courses/find-by-topic/" class="finderTopic selected">Topic</a></li>
+					<li><a href="/courses/find-by-number/" class="finderMCN2">MIT Course Number</a></li>
+					<li><a href="/courses/find-by-department/" class="finderDept">Department</a></li>
+				</ul>
+  
+    <div id="browser">
+        <div id="br1">
+            <h3 class="finderTitle">Topic</h3>
+            <div class="browserPane scroller"><p class="odd" rel="#cat=business" onclick="updateParams('business',1)">Business</p><p class="even" rel="#cat=energy" onclick="updateParams('energy',1)">Energy</p><p class="odd" rel="#cat=engineering" onclick="updateParams('engineering',1)" style="background-color: rgb(255, 144, 0); color: rgb(0, 0, 0);">Engineering</p><p class="even" rel="#cat=finearts" onclick="updateParams('finearts',1)">Fine Arts</p><p class="odd" rel="#cat=healthandmedicine" onclick="updateParams('healthandmedicine',1)">Health and Medicine</p><p class="even" rel="#cat=humanities" onclick="updateParams('humanities',1)">Humanities</p><p class="odd" rel="#cat=mathematics" onclick="updateParams('mathematics',1)">Mathematics</p><p class="even" rel="#cat=science" onclick="updateParams('science',1)" style="">Science</p><p class="odd" rel="#cat=socialscience" onclick="updateParams('socialscience',1)">Social Science</p><p class="even" rel="#cat=society" onclick="updateParams('society',1)">Society</p><p class="odd" rel="#cat=teachingandeducation" onclick="updateParams('teachingandeducation',1)">Teaching and Education</p></div>
+        </div>
+        <div id="br2">
+            <h3 class="finderTitle">Sub-Topic</h3>
+			<div class="browserPane scroller"><p class="odd" onclick="updateParams('Aerospace Engineering',2)">Aerospace Engineering</p><p class="even" onclick="updateParams('Biological Engineering',2)">Biological Engineering</p><p class="odd" onclick="updateParams('Chemical Engineering',2)">Chemical Engineering</p><p class="even" onclick="updateParams('Civil Engineering',2)">Civil Engineering</p><p class="odd" onclick="updateParams('Computer Science',2)" style="background-color: rgb(255, 144, 0); color: rgb(0, 0, 0);">Computer Science</p><p class="even" onclick="updateParams('Electrical Engineering',2)">Electrical Engineering</p><p class="odd" onclick="updateParams('Environmental Engineering',2)">Environmental Engineering</p><p class="even" onclick="updateParams('Materials Science and Engineering',2)">Materials Science and Engineering</p><p class="odd" onclick="updateParams('Mechanical Engineering',2)">Mechanical Engineering</p><p class="even" onclick="updateParams('Nanotechnology',2)">Nanotechnology</p><p class="odd" onclick="updateParams('Nuclear Engineering',2)">Nuclear Engineering</p><p class="even" onclick="updateParams('Ocean Engineering',2)">Ocean Engineering</p><p class="odd" onclick="updateParams('Systems Engineering',2)" style="">Systems Engineering</p></div>
+        </div>
+        <div id="br3">
+            <h3 class="finderTitle">Specialty</h3>
+			<div class="browserPane scroller"><p class="odd" onclick="updateParams('Algorithms and Data Structures',3)">Algorithms and Data Structures</p><p class="even" onclick="updateParams('Artificial Intelligence',3)">Artificial Intelligence</p><p class="odd" onclick="updateParams('Computer Design and Engineering',3)">Computer Design and Engineering</p><p class="even" onclick="updateParams('Computer Networks',3)">Computer Networks</p><p class="odd" onclick="updateParams('Cryptography',3)">Cryptography</p><p class="even" onclick="updateParams('Data Mining',3)">Data Mining</p><p class="odd" onclick="updateParams('Graphics and Visualization',3)">Graphics and Visualization</p><p class="even" onclick="updateParams('Human-Computer Interfaces',3)">Human-Computer Interfaces</p><p class="odd" onclick="updateParams('Operating Systems',3)">Operating Systems</p><p class="even" onclick="updateParams('Programming Languages',3)">Programming Languages</p><p class="odd" onclick="updateParams('Software Design and Engineering',3)">Software Design and Engineering</p><p class="even" onclick="updateParams('Theory of Computation',3)">Theory of Computation</p></div>
+        </div>
+    </div>
+
+<br>
+
+
+<p style="text-align: right; padding-right: .5em" class="help-finder">
+	<em>Need help? Read our <a href="/help/finding-courses/">frequently asked questions</a>.</em>
+</p>
+<p><strong>Limit your results to courses containing any of the following features:</strong></p>
+<div class="clear"></div>
+
+   
+   <div id="filters" class="finderColumns">
+        <div class="filters">   
+             <input type="checkbox" class="filterCheckbox" name="avlectures"> Video/Audio Lectures<br>
+			 <input type="checkbox" class="filterCheckbox" name="projectWithExmp"> Student Work
+             
+		</div>
+		<div class="filters"> 
+			 <input type="checkbox" class="filterCheckbox" name="lectureNotes"> Lecture Notes<br>
+             <input type="checkbox" class="filterCheckbox" name="exams"> Assessments
+        </div>
+		<div class="filters lastCol"> 	
+            <input type="checkbox" class="filterCheckbox" name="textbooks"> Online Textbook<br>
+			<input type="checkbox" class="filterCheckbox" name="simulations"> Interactive Simulations
+        </div> 
+        
+    </div>
+	
+	<div class="results"><p class="title">Results</p></div>
+
+<table class="courseList">
+    <thead>       
+        <tr><th class="MCNcol">Course #</th>
+        <th class="CTcol">Course Title</th>
+		<th class="LVcol">Level</th>
+	</tr></thead>
+	
+    <tbody id="courseList"><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-00sc-introduction-to-computer-science-and-programming-spring-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.00SC</a></td>					<td><a id="result0" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-00sc-introduction-to-computer-science-and-programming-spring-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Introduction to Computer Science and Programming</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-00sc-introduction-to-computer-science-and-programming-spring-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-00-introduction-to-computer-science-and-programming-fall-2008" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.00</a></td>					 <td><a id="result1" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-00-introduction-to-computer-science-and-programming-fall-2008" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Introduction to Computer Science and Programming</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-00-introduction-to-computer-science-and-programming-fall-2008" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-01sc-introduction-to-electrical-engineering-and-computer-science-i-spring-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.01SC</a></td>					<td><a id="result2" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-01sc-introduction-to-electrical-engineering-and-computer-science-i-spring-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Introduction to Electrical Engineering and Computer Science I</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-01sc-introduction-to-electrical-engineering-and-computer-science-i-spring-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-001-structure-and-interpretation-of-computer-programs-spring-2005" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.001</a></td>					 <td><a id="result3" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-001-structure-and-interpretation-of-computer-programs-spring-2005" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Structure and Interpretation of Computer Programs</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-001-structure-and-interpretation-of-computer-programs-spring-2005" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-006-introduction-to-algorithms-fall-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.006</a></td>					<td><a id="result4" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-006-introduction-to-algorithms-fall-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Introduction to Algorithms</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-006-introduction-to-algorithms-fall-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-02-introduction-to-eecs-ii-digital-communication-systems-fall-2012" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.02</a></td>					 <td><a id="result5" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-02-introduction-to-eecs-ii-digital-communication-systems-fall-2012" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Introduction to EECS II: Digital Communication Systems</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-02-introduction-to-eecs-ii-digital-communication-systems-fall-2012" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-033-computer-system-engineering-spring-2009" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.033</a></td>					<td><a id="result6" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-033-computer-system-engineering-spring-2009" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Computer System Engineering</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-033-computer-system-engineering-spring-2009" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-034-artificial-intelligence-fall-2010" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.034</a></td>					 <td><a id="result7" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-034-artificial-intelligence-fall-2010" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Artificial Intelligence</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-034-artificial-intelligence-fall-2010" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-035-computer-language-engineering-sma-5502-fall-2005" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.035</a></td>					<td><a id="result8" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-035-computer-language-engineering-sma-5502-fall-2005" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Computer Language Engineering (SMA 5502)</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-035-computer-language-engineering-sma-5502-fall-2005" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-042j-mathematics-for-computer-science-fall-2010" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.042J</a></td>					 <td><a id="result9" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-042j-mathematics-for-computer-science-fall-2010" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Mathematics for Computer Science</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-042j-mathematics-for-computer-science-fall-2010" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-046j-introduction-to-algorithms-sma-5503-fall-2005" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.046J</a></td>					<td><a id="result10" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-046j-introduction-to-algorithms-sma-5503-fall-2005" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Introduction to Algorithms (SMA 5503)</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-046j-introduction-to-algorithms-sma-5503-fall-2005" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-050j-information-and-entropy-spring-2008" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.050J</a></td>					 <td><a id="result11" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-050j-information-and-entropy-spring-2008" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Information and Entropy</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-050j-information-and-entropy-spring-2008" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2010" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.172</a></td>					<td><a id="result12" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2010" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Performance Engineering of Software Systems</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2010" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-189-multicore-programming-primer-january-iap-2007" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.189</a></td>					 <td><a id="result13" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-189-multicore-programming-primer-january-iap-2007" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Multicore Programming Primer</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-189-multicore-programming-primer-january-iap-2007" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-370-the-battlecode-programming-competition-january-iap-2013" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.370</a></td>					<td><a id="result14" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-370-the-battlecode-programming-competition-january-iap-2013" onclick="checkSR(this,'electrical-engineering-and-computer-science')">The Battlecode Programming Competition</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-370-the-battlecode-programming-competition-january-iap-2013" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Undergraduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/mathematics/18-s997-introduction-to-matlab-programming-fall-2011" onclick="checkSR(this,'mathematics')">18.S997</a></td>					 <td><a id="result15" rel="coursePreview" class="preview" href="/courses/mathematics/18-s997-introduction-to-matlab-programming-fall-2011" onclick="checkSR(this,'mathematics')">Introduction To MATLAB Programming</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/mathematics/18-s997-introduction-to-matlab-programming-fall-2011" onclick="checkSR(this,'mathematics')">Undergraduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/comparative-media-studies-writing/cms-611j-creating-video-games-fall-2013" onclick="checkSR(this,'comparative-media-studies-writing')">CMS.611J</a></td>					<td><a id="result16" rel="coursePreview" class="preview" href="/courses/comparative-media-studies-writing/cms-611j-creating-video-games-fall-2013" onclick="checkSR(this,'comparative-media-studies-writing')">Creating Video Games</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/comparative-media-studies-writing/cms-611j-creating-video-games-fall-2013" onclick="checkSR(this,'comparative-media-studies-writing')">Undergraduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-231-dynamic-programming-and-stochastic-control-fall-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.231</a></td>					 <td><a id="result17" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-231-dynamic-programming-and-stochastic-control-fall-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Dynamic Programming and Stochastic Control</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-231-dynamic-programming-and-stochastic-control-fall-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Graduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-832-underactuated-robotics-spring-2009" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.832</a></td>					<td><a id="result18" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-832-underactuated-robotics-spring-2009" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Underactuated Robotics</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-832-underactuated-robotics-spring-2009" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Graduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-849-geometric-folding-algorithms-linkages-origami-polyhedra-fall-2012" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.849</a></td>					 <td><a id="result19" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-849-geometric-folding-algorithms-linkages-origami-polyhedra-fall-2012" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Geometric Folding Algorithms: Linkages, Origami, Polyhedra</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-849-geometric-folding-algorithms-linkages-origami-polyhedra-fall-2012" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Graduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-851-advanced-data-structures-spring-2012" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.851</a></td>					<td><a id="result20" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-851-advanced-data-structures-spring-2012" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Advanced Data Structures</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-851-advanced-data-structures-spring-2012" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Graduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.858</a></td>					 <td><a id="result21" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Computer Systems Security</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-858-computer-systems-security-fall-2014" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Graduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-868j-the-society-of-mind-fall-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.868J</a></td>					<td><a id="result22" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-868j-the-society-of-mind-fall-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">The Society of Mind</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-868j-the-society-of-mind-fall-2011" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Graduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-890-algorithmic-lower-bounds-fun-with-hardness-proofs-fall-2014" onclick="checkSR(this,'electrical-engineering-and-computer-science')">6.890</a></td>					 <td><a id="result23" rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-890-algorithmic-lower-bounds-fun-with-hardness-proofs-fall-2014" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Algorithmic Lower Bounds: Fun with Hardness Proofs</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/electrical-engineering-and-computer-science/6-890-algorithmic-lower-bounds-fun-with-hardness-proofs-fall-2014" onclick="checkSR(this,'electrical-engineering-and-computer-science')">Graduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/biology/7-91j-foundations-of-computational-and-systems-biology-spring-2014" onclick="checkSR(this,'biology')">7.91J</a></td>					<td><a id="result24" rel="coursePreview" class="preview" href="/courses/biology/7-91j-foundations-of-computational-and-systems-biology-spring-2014" onclick="checkSR(this,'biology')">Foundations of Computational and Systems Biology</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/biology/7-91j-foundations-of-computational-and-systems-biology-spring-2014" onclick="checkSR(this,'biology')">Graduate</a></td></tr><tr class="even"><td><a rel="coursePreview" class="preview" href="/courses/media-arts-and-sciences/mas-531-computational-camera-and-photography-fall-2009" onclick="checkSR(this,'media-arts-and-sciences')">MAS.531</a></td>					 <td><a id="result25" rel="coursePreview" class="preview" href="/courses/media-arts-and-sciences/mas-531-computational-camera-and-photography-fall-2009" onclick="checkSR(this,'media-arts-and-sciences')">Computational Camera and Photography</a></td>					 <td><a rel="coursePreview" class="preview" href="/courses/media-arts-and-sciences/mas-531-computational-camera-and-photography-fall-2009" onclick="checkSR(this,'media-arts-and-sciences')">Graduate</a></td></tr><tr class="odd"><td><a rel="coursePreview" class="preview" href="/courses/media-arts-and-sciences/mas-771-autism-theory-and-technology-spring-2011" onclick="checkSR(this,'media-arts-and-sciences')">MAS.771</a></td>					<td><a id="result26" rel="coursePreview" class="preview" href="/courses/media-arts-and-sciences/mas-771-autism-theory-and-technology-spring-2011" onclick="checkSR(this,'media-arts-and-sciences')">Autism Theory and Technology</a></td>					<td><a rel="coursePreview" class="preview" href="/courses/media-arts-and-sciences/mas-771-autism-theory-and-technology-spring-2011" onclick="checkSR(this,'media-arts-and-sciences')">Graduate</a></td></tr></tbody>
+	
+</table>
+
+<br><br><br>
+
+<div id="coursePreview" class="coursePreview" style="display: none; width: 468px;">
+   	<div id="courseInfoInner">	
+	<a class="close" href="#">
+			<img class="btn_close" alt="Close" title="Close Window" src="/images/close.png" style="display: none;">
+		</a>
+				<div class="coursePreviewTop"> <h3 id="courseTitle">Ocean Wave Interaction with Ships and Offshore Energy Systems (13.022)</h3>
+				</div>
+				<div class="coursePreviewBottom">
+					<div class="images">
+						<img id="courseThumb" class="first" alt="Course image thumbnail alt-text goes here." src="">
+							<br>
+						<a href="" id="viewCourse"><img alt="Click here to view this course." src="/images/button_view-course.png">
+						</a>
+					</div>
+					<div class="info">
+						<table class="coursePreviewTable">
+						  <tbody>
+							<tr>
+								 <td colspan="2">
+									<p id="courseDesc" class="intro">Some Description</p>
+								</td>
+							</tr>
+							<tr class="instructor">
+								<td class="first">
+									<p>
+										<strong>Instructor(s)</strong>
+									</p>
+								</td>
+								<td>
+									<p id="courseInstructors">Prof.</p>
+								</td>
+							</tr>
+							<tr class="SRclass">
+								<td class="first">
+									<p>
+										<strong>As Taught In</strong>
+									</p>
+								</td>
+								<td>
+									<p id="courseSem">Spring 2002</p>
+								</td>
+							</tr>
+							<tr class="SRclass">
+								<td>
+									<p>
+										<strong>Course Number</strong>
+									</p>
+								</td>
+								<td>
+									<p id="courseNo">2.24</p>
+								</td>
+							</tr>
+							<tr id="level">
+								<td>
+									<p>
+										<strong>Level</strong>
+									</p>
+								</td>
+								<td>
+									<p id="courseLevel">Undergraduate/Graduate</p>
+								</td>
+							</tr>
+							<tr class="last">
+								<td>
+									<p>
+										<strong>Features</strong>
+									</p>
+								</td>
+								<td>
+									<p id="courseFeatures">Lecture Notes, Student Work</p>
+								</td>
+							</tr>
+						  </tbody>
+						</table>
+					</div>		
+				</div>
+			</div>
+		</div>		
+
+
+            </div>
+        </div>
+        <div id="right">
+        	<a href="https://giving.mit.edu/givenow/ocw/MakeGift.dyn"><img src="/images/button_donate-now.png" alt="Donate Now." class="donate"></a><br>
+            <div id="google_ads">    
+    <script src="http://partner.googleadservices.com/gampad/google_service.js" type="text/javascript"></script>
+    <script type="text/javascript">GS_googleAddAdSenseService("ca-pub-6588555046597237");GS_googleEnableAllServices();</script><script src="http://partner.googleadservices.com/gampad/google_ads.js"></script><script src="http://partner.googleadservices.com/gampad/google_ads.js"></script>
+    <script type="text/javascript">GA_googleAddSlot("ca-pub-6588555046597237", "COURSE_SLOT_A");GA_googleAddSlot("ca-pub-6588555046597237", "COURSE_SLOT_B");GA_googleAddSlot("ca-pub-6588555046597237", "COURSE_SLOT_C");</script>
+    <script type="text/javascript">GA_googleFetchAds();</script>
+    <script type="text/javascript" language="javascript">
+	GA_googleAddAttr("TYPE","HOUSE");
+	GA_googleAddAttr("DEPARTMENT","WEB");
+	GA_googleAddAttr("PG_SECTION","COURSES");
+	GA_googleAddAttr("PG_AREA","COURSES");
+	GA_googleAddAttr("PG_TLP","COURSES");
+</script>
+<script type="text/javascript">GA_googleFillSlot("COURSE_SLOT_A");</script><script src="http://pubads.g.doubleclick.net/gampad/ads?correlator=237694136352768&amp;output=json_html&amp;callback=GA_googleSetAdContentsBySlotForSync&amp;impl=s&amp;ic=0&amp;client=ca-pub-6588555046597237&amp;slotname=COURSE_SLOT_A&amp;page_slots=COURSE_SLOT_A&amp;cust_params=TYPE%3DHOUSE%26DEPARTMENT%3DWEB%26PG_SECTION%3DCOURSES%26PG_AREA%3DCOURSES%26PG_TLP%3DCOURSES&amp;cookie=ID%3D6b99a5b9db93f486%3AT%3D1440995871%3AS%3DALNI_MYfELb2XsOuCqJMe67udjVvcMdHvg&amp;url=http%3A%2F%2Focw.mit.edu%2Fcourses%2Ffind-by-topic%2F&amp;ref=http%3A%2F%2Focw.mit.edu%2Fcourses%2Fcivil-and-environmental-engineering%2F1-00-introduction-to-computers-and-engineering-problem-solving-spring-2012%2F&amp;lmt=1432513964&amp;dt=1441087529605&amp;cc=100&amp;biw=1349&amp;bih=617&amp;adk=606711425&amp;adx=973&amp;ady=221&amp;ifi=1&amp;oid=3&amp;u_tz=480&amp;u_his=3&amp;u_java=true&amp;u_h=768&amp;u_w=1366&amp;u_ah=768&amp;u_aw=1366&amp;u_cd=32&amp;u_nplug=25&amp;u_nmime=45&amp;flash=17.0.0&amp;gads=v2&amp;ga_vid=1329136244.1440995869&amp;ga_sid=1441087530&amp;ga_hid=1622919507"></script><iframe src="http://tpc.googlesyndication.com/safeframe/1-0-2/html/container.html" style="visibility: hidden; display: none;"></iframe><div id="google_ads_div_COURSE_SLOT_A_ad_wrapper">
+<div id="google_ads_div_COURSE_SLOT_A_ad_container" style="display:inline-block;"><a href="http://adclick.g.doubleclick.net/aclk?sa=L&amp;ai=B52XTKkDlVf6IB4eVpgOKqpuYC8OX0uAGAAAAEAEg94TLDTgAWMPeoNVBYP2IlIHoA7IBC29jdy5taXQuZWR1ugEJZ2ZwX2ltYWdlyAEJ2gEpaHR0cDovL29jdy5taXQuZWR1L2NvdXJzZXMvZmluZC1ieS10b3BpYy_AAgLgAgDqAg1DT1VSU0VfU0xPVF9B-AKB0h6QA7AJmAPgA6gDAdAEkE7gBAGQBgGgBhbYBwA&amp;num=0&amp;cid=5GhnV28LMBRueLzZJu9uXQm2&amp;sig=AOD64_1CwNJtMfQ0jTjvz3sevOtnQKnphA&amp;client=ca-pub-6588555046597237&amp;adurl=http://ocw.mit.edu/donate/why-donate/index.htm?utm_source=OCW%26utm_medium=banner%26utm_content=nov12_zoran%26utm_campaign=DQ"><img src="http://ocw.mit.edu/ans7870/banners/ocw/OCW_180x200_donate_zoran.jpg" alt="Donor Message: &quot;Spreading knowledge, sharing information will save the world.&quot; Read more" title="Donor Message: &quot;Spreading knowledge, sharing information will save the world.&quot; Read more" border="0"></a>
+
+</div>
+</div>
+
+<script type="text/javascript">GA_googleFillSlot("COURSE_SLOT_B");</script><script src="http://pubads.g.doubleclick.net/gampad/ads?correlator=237694136352768&amp;output=json_html&amp;callback=GA_googleSetAdContentsBySlotForSync&amp;impl=s&amp;ic=0&amp;client=ca-pub-6588555046597237&amp;slotname=COURSE_SLOT_B&amp;page_slots=COURSE_SLOT_A%2CCOURSE_SLOT_B&amp;cust_params=TYPE%3DHOUSE%26DEPARTMENT%3DWEB%26PG_SECTION%3DCOURSES%26PG_AREA%3DCOURSES%26PG_TLP%3DCOURSES&amp;cookie=ID%3D6b99a5b9db93f486%3AT%3D1440995871%3AS%3DALNI_MYfELb2XsOuCqJMe67udjVvcMdHvg&amp;url=http%3A%2F%2Focw.mit.edu%2Fcourses%2Ffind-by-topic%2F&amp;ref=http%3A%2F%2Focw.mit.edu%2Fcourses%2Fcivil-and-environmental-engineering%2F1-00-introduction-to-computers-and-engineering-problem-solving-spring-2012%2F&amp;lmt=1432513964&amp;dt=1441087529746&amp;cc=100&amp;biw=1349&amp;bih=617&amp;adk=2022876714&amp;adx=973&amp;ady=236&amp;ifi=2&amp;oid=3&amp;u_tz=480&amp;u_his=3&amp;u_java=true&amp;u_h=768&amp;u_w=1366&amp;u_ah=768&amp;u_aw=1366&amp;u_cd=32&amp;u_nplug=25&amp;u_nmime=45&amp;flash=17.0.0&amp;gads=v2&amp;ga_vid=1329136244.1440995869&amp;ga_sid=1441087530&amp;ga_hid=1622919507"></script><div id="google_ads_div_COURSE_SLOT_B_ad_wrapper">
+<div id="google_ads_div_COURSE_SLOT_B_ad_container" style="display:inline-block;"><a href="http://adclick.g.doubleclick.net/aclk?sa=L&amp;ai=BTv8DKkDlVaWNGsGspgO3s43oCJO0lbMGAAAAEAEg94TLDTgAWOuHsbv_AWD9iJSB6AOyAQtvY3cubWl0LmVkdboBCWdmcF9pbWFnZcgBCdoBKWh0dHA6Ly9vY3cubWl0LmVkdS9jb3Vyc2VzL2ZpbmQtYnktdG9waWMv4AECwAIC4AIA6gINQ09VUlNFX1NMT1RfQvgCgdIekAOwCZgD4AOoAwHQBJBO4AQBkAYBoAYW2AcA&amp;num=0&amp;cid=5Gjss7NHctYDy4opbvA0qmFX&amp;sig=AOD64_3LnER_o35JA7-Paxru23x98XLJqw&amp;client=ca-pub-6588555046597237&amp;adurl=http://ocw.mit.edu/educator/"><img src="http://ocw.mit.edu/ans7870/banners/ocw/180x150_ocw_ed_brain_prof2.png" alt="Explore OCW Educator"></a>
+
+</div>
+</div>
+
+<script type="text/javascript">GA_googleFillSlot("COURSE_SLOT_C");</script><script src="http://pubads.g.doubleclick.net/gampad/ads?correlator=237694136352768&amp;output=json_html&amp;callback=GA_googleSetAdContentsBySlotForSync&amp;impl=s&amp;ic=0&amp;client=ca-pub-6588555046597237&amp;slotname=COURSE_SLOT_C&amp;page_slots=COURSE_SLOT_A%2CCOURSE_SLOT_B%2CCOURSE_SLOT_C&amp;cust_params=TYPE%3DHOUSE%26DEPARTMENT%3DWEB%26PG_SECTION%3DCOURSES%26PG_AREA%3DCOURSES%26PG_TLP%3DCOURSES&amp;cookie=ID%3D6b99a5b9db93f486%3AT%3D1440995871%3AS%3DALNI_MYfELb2XsOuCqJMe67udjVvcMdHvg&amp;url=http%3A%2F%2Focw.mit.edu%2Fcourses%2Ffind-by-topic%2F&amp;ref=http%3A%2F%2Focw.mit.edu%2Fcourses%2Fcivil-and-environmental-engineering%2F1-00-introduction-to-computers-and-engineering-problem-solving-spring-2012%2F&amp;lmt=1432513964&amp;dt=1441087530120&amp;cc=100&amp;biw=1349&amp;bih=617&amp;adk=3426084413&amp;adx=973&amp;ady=439&amp;ifi=3&amp;oid=3&amp;u_tz=480&amp;u_his=3&amp;u_java=true&amp;u_h=768&amp;u_w=1366&amp;u_ah=768&amp;u_aw=1366&amp;u_cd=32&amp;u_nplug=25&amp;u_nmime=45&amp;flash=17.0.0&amp;gads=v2&amp;ga_vid=1329136244.1440995869&amp;ga_sid=1441087530&amp;ga_hid=1622919507"></script><div id="google_ads_div_COURSE_SLOT_C_ad_wrapper">
+<div id="google_ads_div_COURSE_SLOT_C_ad_container" style="display:inline-block;"><br><div style="padding-top:2px;"><a href="http://adclick.g.doubleclick.net/aclk?sa=L&amp;ai=BrVQOK0DlVZf_FIuKpAOD4pnQC8vOnacEAAAAEAEg94TLDTgAWIP7wsRBYP2IlIHoA7IBC29jdy5taXQuZWR1ugEJZ2ZwX2ltYWdlyAEJ2gEpaHR0cDovL29jdy5taXQuZWR1L2NvdXJzZXMvZmluZC1ieS10b3BpYy_gAQPAAgLgAgDqAg1DT1VSU0VfU0xPVF9D-AKB0h6QA7AJmAPgA6gDAdAEkE7gBAGQBgGgBhbYBwA&amp;num=0&amp;cid=5Gh8Z3qTOJZlwO2avTiVLgU2&amp;sig=AOD64_01ppfJalRZCoL5VNbOQKvacq3Y7w&amp;client=ca-pub-6588555046597237&amp;adurl=http://ocw.mit.edu/resources/res-18-005-highlights-of-calculus-spring-2010/"><img src="http://ocw.mit.edu/ans7870/banners/ocw/160x600_calc_nov12.jpg" alt="Highlights of Calculus.  Watch Videos on OCW.  Watch Now &gt;&gt;" title="Highlights of Calculus.  Watch Videos on OCW.  Watch Now &gt;&gt;"></a></div>
+
+</div>
+</div>
+
+
+</div>      	
+           	
+        </div>
+        <div class="clear"></div>
+    </div>
+</div>
+
+<!--googleoff: index-->
+<div id="bottom">
+   <div id="grid">
+      <!-- *begin footer* -->
+      <div id="footer" role="navigation sitemap">
+         <div id="foot-c1" class="grid_2 alpha">
+            <h4 class="footer">Courses</h4>
+            <ul class="foot-bullet">
+               <li><a href="/courses/find-by-topic/">Find by Topic</a></li>
+               <li><a href="/courses/find-by-number/">Find by Course Number</a></li>
+               <li><a href="/courses/find-by-department/">Find by Department</a></li>
+               <li><a href="/courses/audio-video-courses/">Audio/Video Courses</a></li>
+               <li><a href="/courses/subtitled/">Courses with Subtitles</a></li>
+               <li><a href="/courses/online-textbooks/">Online Textbooks</a></li>
+               <li><a href="/courses/new-courses/">New Courses</a></li>
+               <li><a href="/courses/most-visited-courses/">Most Visited Courses</a></li>
+               <li><a href="/courses/ocw-scholar/">OCW Scholar Courses</a></li>
+               <li><a href="/courses/this-course-at-mit/">This Course at MIT</a></li>
+               <li><a href="/resources/">Supplemental Resources</a></li>
+               <li><a href="/courses/translated-courses/">Translated Courses</a></li>
+            </ul>
+         </div>
+         <div id="foot-c2" class="grid_2">
+            <h4 class="footer">About</h4>
+            <ul class="foot-bullet">
+               <li><a href="/about/">About OpenCourseWare</a></li>
+               <li><a href="/about/site-statistics/">Site Stats</a></li>
+               <li><a href="/about/ocw-stories/">OCW Stories</a></li>
+               <li><a href="/about/media-coverage/">Media Coverage</a></li>
+               <li><a href="/about/newsletter/">Newsletter</a></li>
+               <li><a href="/about/media-coverage/press-releases/">Press Releases</a></li>
+            </ul>
+         </div>
+         <div id="foot-c3" class="grid_2">
+            <h4 class="footer">Donate</h4>
+            <ul class="foot-bullet">
+               <li><a href="/donate">Make a Donation</a></li>
+               <li><a href="/donate/why-donate/">Why Donate?</a></li>
+               <li><a href="/donate/our-supporters/">Our Supporters</a></li>
+               <li><a href="/donate/other-ways-to-contribute/">Other Ways to Contribute</a></li>
+               <li><a href="/donate/shop-ocw/">Shop OCW</a></li>
+               <li><a href="/support/">Become a Corporate Sponsor</a></li>
+            </ul>
+         </div>
+         <div id="foot-c4" class="grid_2">
+            <h4 class="footer">Featured Sites</h4>
+            <ul class="foot-bullet">
+               <li><a href="/high-school/">Highlights for High School</a></li>
+               <li><a href="/educator/">OCW Educator</a></li>
+               <li><a href="http://ocw.mit.edu/ans7870/featured/mitx-courses-on-edx.htm">MITx Courses on edX</a></li>
+               <li><a href="http://teachingexcellence.mit.edu/">Teaching Excellence at MIT</a></li>
+               <li><a href="http://www.oeconsortium.org/">Open Education Consortium</a></li>
+            </ul>
+            <h4 class="footer" style="margin-top: 14px;">Tools</h4>
+            <ul class="foot-bullet">
+               <li><a href="/help/">Help &amp; FAQs</a></li>
+               <li><a href="/jsp/feedback.jsp">Contact Us</a></li>
+               <li><a href="/search/AdvancedSearch.htm">Advanced Search</a></li>
+               <li><a href="/help/site-map/">Site Map</a></li>
+               <li><a href="/terms/">Privacy &amp; Terms of Use</a></li>
+               <li><a href="/help/rss/">RSS Feeds</a></li>
+            </ul>
+         </div>
+         <div id="foot-c5" class="grid_4 omega">
+            <h4 class="footer">Our Corporate Supporters</h4>
+            <!-- HOME_CORP_LOGO_1 -->
+            <div id="div-gpt-ad-1388181177156-0" class="sponsors_google_ads_even">
+               <script type="text/javascript">
+                  googletag.cmd.push(function() { googletag.display('div-gpt-ad-1388181177156-0'); });
+               </script><div id="google_ads_iframe_/1064917/HOME_CORP_LOGO_1_0__container__" style="border: 0pt none;"><iframe id="google_ads_iframe_/1064917/HOME_CORP_LOGO_1_0" name="google_ads_iframe_/1064917/HOME_CORP_LOGO_1_0" width="145" height="53" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" src="javascript:&quot;<html><body style='background:transparent'></body></html>&quot;" style="border: 0px; vertical-align: bottom;"></iframe></div><iframe id="google_ads_iframe_/1064917/HOME_CORP_LOGO_1_0__hidden__" name="google_ads_iframe_/1064917/HOME_CORP_LOGO_1_0__hidden__" width="0" height="0" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" src="javascript:&quot;<html><body style='background:transparent'></body></html>&quot;" style="border: 0px; vertical-align: bottom; visibility: hidden; display: none;"></iframe>
+            </div>
+            <!-- HOME_CORP_LOGO_2 -->
+            <div id="div-gpt-ad-1388181177156-1" class="sponsors_google_ads_odd">
+               <script type="text/javascript">
+                  googletag.cmd.push(function() { googletag.display('div-gpt-ad-1388181177156-1'); });
+               </script><div id="google_ads_iframe_/1064917/HOME_CORP_LOGO_2_0__container__" style="border: 0pt none;"><iframe id="google_ads_iframe_/1064917/HOME_CORP_LOGO_2_0" name="google_ads_iframe_/1064917/HOME_CORP_LOGO_2_0" width="145" height="53" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" src="javascript:&quot;<html><body style='background:transparent'></body></html>&quot;" style="border: 0px; vertical-align: bottom;"></iframe></div>
+            </div>
+            <!-- HOME_CORP_LOGO_3 -->
+            <div id="div-gpt-ad-1388181177156-2" class="sponsors_google_ads_even">
+               <script type="text/javascript">
+                  googletag.cmd.push(function() { googletag.display('div-gpt-ad-1388181177156-2'); });
+               </script><div id="google_ads_iframe_/1064917/HOME_CORP_LOGO_3_0__container__" style="border: 0pt none;"><iframe id="google_ads_iframe_/1064917/HOME_CORP_LOGO_3_0" name="google_ads_iframe_/1064917/HOME_CORP_LOGO_3_0" width="145" height="53" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" src="javascript:&quot;<html><body style='background:transparent'></body></html>&quot;" style="border: 0px; vertical-align: bottom;"></iframe></div>
+            </div>
+            <!-- HOME_CORP_LOGO_4 -->
+            <div id="div-gpt-ad-1388181177156-3" class="sponsors_google_ads_odd">
+               <script type="text/javascript">
+                  googletag.cmd.push(function() { googletag.display('div-gpt-ad-1388181177156-3'); });
+               </script><div id="google_ads_iframe_/1064917/HOME_CORP_LOGO_4_0__container__" style="border: 0pt none;"><iframe id="google_ads_iframe_/1064917/HOME_CORP_LOGO_4_0" name="google_ads_iframe_/1064917/HOME_CORP_LOGO_4_0" width="145" height="53" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" src="javascript:&quot;<html><body style='background:transparent'></body></html>&quot;" style="border: 0px; vertical-align: bottom;"></iframe></div>
+            </div>
+            <!-- HOME_CORP_LOGO_5 -->
+            <div id="div-gpt-ad-1388181177156-4" class="sponsors_google_ads_even">
+               <script type="text/javascript">
+                  googletag.cmd.push(function() { googletag.display('div-gpt-ad-1388181177156-4'); });
+               </script><div id="google_ads_iframe_/1064917/HOME_CORP_LOGO_5_0__container__" style="border: 0pt none;"><iframe id="google_ads_iframe_/1064917/HOME_CORP_LOGO_5_0" name="google_ads_iframe_/1064917/HOME_CORP_LOGO_5_0" width="145" height="53" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" src="javascript:&quot;<html><body style='background:transparent'></body></html>&quot;" style="border: 0px; vertical-align: bottom;"></iframe></div>
+            </div>
+            <!-- HOME_CORP_LOGO_6 -->
+            <div id="div-gpt-ad-1388181177156-5" class="sponsors_google_ads_odd">
+               <script type="text/javascript">
+                  googletag.cmd.push(function() { googletag.display('div-gpt-ad-1388181177156-5'); });
+               </script><div id="google_ads_iframe_/1064917/HOME_CORP_LOGO_6_0__container__" style="border: 0pt none;"><iframe id="google_ads_iframe_/1064917/HOME_CORP_LOGO_6_0" name="google_ads_iframe_/1064917/HOME_CORP_LOGO_6_0" width="145" height="53" scrolling="no" marginwidth="0" marginheight="0" frameborder="0" src="javascript:&quot;<html><body style='background:transparent'></body></html>&quot;" style="border: 0px; vertical-align: bottom;"></iframe></div>
+            </div>
+         </div>
+         <div class="grid_12 alpha omega" itemprop="publisher" itemscope="" itemtype="http://schema.org/CollegeOrUniversity">
+            <h4 class="footer" style="border-top: thin solid #d5c9ba; padding-top: 10px; margin-bottom: 10px;">About <span itemprop="name">MIT OpenCourseWare</span></h4>
+            <p style="color: #999; font-size: 1em; line-height: 1.5em; margin-top: 10px;" itemprop="description">MIT OpenCourseWare makes the materials used in the teaching of almost all of MIT's subjects available on the Web, free of charge. With more than 2,200 courses available, OCW is delivering on the promise of open sharing of knowledge. <a href="/about/">Learn more »</a></p>
+         </div>
+         <div id="foot-copy" class="grid_12 alpha omega" style="border-top: none;">
+            <a href="http://web.mit.edu"><img src="/images/logo_mit.png" alt="Massachusetts Institute of Technology logo and name." style="width: 195; height: 44;"></a><a href="http://odl.mit.edu"><img src="/images/logo_odl.png" alt="MIT Office of Digital Learning logo and name." style="width: 289; height: 54; vertical-align: top;"></a><a href="http://www.oeconsortium.org/"><img src="/images/logo_oec.png" alt="Open Education Consortium logo." style="width: 219px; height: 59px; vertical-align: top;"></a><a rel="license" itemprop="useRightsUrl" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="/images/cc_by-nc-sa.png" alt="Creative Commons logo with terms BY-NC-SA." style="width: 126px; height: 44px; margin-right: 0; margin-left: 13px;"></a>
+            <p class="copyright">© 2001–2015<br> Massachusetts Institute of Technology</p>
+            <p style="font-size: 0.9em; margin-bottom: 15px;">Your use of the MIT OpenCourseWare site and materials is subject to our <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license">Creative Commons License</a> and other <a href="/terms/" rel="cc:morePermissions">terms of use</a>.</p>
+         </div>
+      </div>
+   </div>
+</div>
+<!--googleon: index-->
+<noscript>&lt;div&gt;&lt;img alt="" border="0" name="DCSIMG" width="1" height="1" src="http://statse.webtrendslive.com/dcs8q9s2ag9xjywz8l6x34ik5_6b3t/njs.gif?dcsuri=/nojavascript&amp;WT.js=No&amp;WT.tv=8.0.0" /&gt;&lt;/div&gt;</noscript>
+
+<iframe id="google_osd_static_frame_153937917202" name="google_osd_static_frame" style="display: none; width: 0px; height: 0px;"></iframe></body></html>
