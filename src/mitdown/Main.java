@@ -141,50 +141,50 @@ public class Main {
 				Course course = (Course) cit.next();
 				File details = new File(downhome + course.getName() + c + "/" + course.getName() + ".html");
 				if (course.isBatch()) {
-//					System.out.println(course.getDownurl());
-//					Document doc = Jsoup.connect(course.getDownurl()).get();
-//					Elements els = doc.getElementsByTag("a");
-//					int i = 1;
-//					Iterator<Element> it = els.iterator();
-//					while (it.hasNext()) {
-//						Element e = it.next();
-//						if (e.html() == "..")
-//							continue;
-//						String downurl = course.getDownurl() + '/' + e.attr("href");
-//						URL source = new URL(downurl);
-//						File destination;
-//						if (downurl.contains(".mp4") || downurl.contains(".srt")) {
-//							if (downurl.contains(".mp4")) {
-//								destination = new File(
-//										downhome + course.getName() + c + "/videos/lecture: " + i + ".mp4");
-//								if (!destination.exists()) {
-//									try {
-//										FileUtils.copyURLToFile(source, destination);
-//										System.out.println(
-//												"download " + destination.getName() + c + " from " + source.getFile());
-//									} catch (Exception e2) {
-//										System.out.println("fail download " + destination.getName() + c + " from "
-//												+ source.getFile());
-//									}
-//								}
-//
-//							} else {
-//								destination = new File(
-//										downhome + course.getName() + c + "/" + "subtitles/lecture: " + i + ".srt");
-//								if (!destination.exists()) {
-//									try {
-//										FileUtils.copyURLToFile(source, destination);
-//										System.out.println(
-//												"download " + destination.getName() + " from " + source.getFile());
-//									} catch (Exception e2) {
-//										System.out.println("fail download " + destination.getName() + c + " from "
-//												+ source.getFile());
-//									}
-//								}
-//								i++;
-//							}
-//						}
-//					}
+					System.out.println(course.getDownurl());
+					Document doc = Jsoup.connect(course.getDownurl()).get();
+					Elements els = doc.getElementsByTag("a");
+					int i = 1;
+					Iterator<Element> it = els.iterator();
+					while (it.hasNext()) {
+						Element e = it.next();
+						if (e.html() == "..")
+							continue;
+						String downurl = course.getDownurl() + '/' + e.attr("href");
+						URL source = new URL(downurl);
+						File destination;
+						if (downurl.contains(".mp4") || downurl.contains(".srt")) {
+							if (downurl.contains(".mp4")) {
+								destination = new File(
+										downhome + course.getName() + c + "/videos/lecture: " + i + ".mp4");
+								if (!destination.exists()) {
+									try {
+										FileUtils.copyURLToFile(source, destination);
+										System.out.println(
+												"download " + destination.getName() + c + " from " + source.getFile());
+									} catch (Exception e2) {
+										System.out.println("fail download " + destination.getName() + c + " from "
+												+ source.getFile());
+									}
+								}
+
+							} else {
+								destination = new File(
+										downhome + course.getName() + c + "/" + "subtitles/lecture: " + i + ".srt");
+								if (!destination.exists()) {
+									try {
+										FileUtils.copyURLToFile(source, destination);
+										System.out.println(
+												"download " + destination.getName() + " from " + source.getFile());
+									} catch (Exception e2) {
+										System.out.println("fail download " + destination.getName() + c + " from "
+												+ source.getFile());
+									}
+								}
+								i++;
+							}
+						}
+					}
 				} else {
 					List<Video> videos = course.getVideos();
 					if (videos == null)
